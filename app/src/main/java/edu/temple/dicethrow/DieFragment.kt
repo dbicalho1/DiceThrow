@@ -10,18 +10,24 @@ import kotlin.random.Random
 
 class DieFragment : Fragment() {
 
-    val DIESIDE = "sidenumber"
+    companion object {
+        const val ARG_DIE_SIDES = "sidenumber"
+        private const val STATE_CURRENT_ROLL = "currentRoll"
+    }
 
-    lateinit var dieTextView: TextView
+    private var dieTextView: TextView? = null
 
-    var dieSides: Int = 6
+    private var dieSides: Int = 6
+    private var currentRoll: Int = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            it.getInt(DIESIDE).run {
-                dieSides = this
-            }
+        dieSides = arguments?.getInt(ARG_DIE_SIDES, 6) ?: 6
+        require(dieSides > 0) { "A die must have at least one side" }
+        currentRoll = if (savedInstanceState?.containsKey(STATE_CURRENT_ROLL) == true) {
+            savedInstanceState.getInt(STATE_CURRENT_ROLL)
+        } else {
+            Random.nextInt(dieSides) + 1
         }
     }
 
@@ -37,13 +43,24 @@ class DieFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        throwDie()
+        dieTextView?.text = currentRoll.toString()
         view.setOnClickListener{
             throwDie()
         }
     }
 
     fun throwDie() {
-        dieTextView.text = Random.nextInt(dieSides).toString()
+        currentRoll = Random.nextInt(dieSides) + 1
+        dieTextView?.text = currentRoll.toString()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt(STATE_CURRENT_ROLL, currentRoll)
+    }
+
+    override fun onDestroyView() {
+        dieTextView = null
+        super.onDestroyView()
     }
 }
